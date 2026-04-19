@@ -140,12 +140,20 @@ def json_response(response):
         return response.text
 
 
+def default_chat_settings(payload):
+    payload.setdefault("chat_template_kwargs", {})
+    payload["chat_template_kwargs"].setdefault("enable_thinking", False)
+    return payload
+
+
 async def handler(job):
     job_input = job.get("input") or {}
 
     if job_input.get("openai_route"):
         route = job_input["openai_route"]
         payload = job_input.get("openai_input") or {}
+        if route.endswith("/chat/completions"):
+            payload = default_chat_settings(payload)
         response = requests.post(
             f"{BASE_URL}{route}",
             headers={"Content-Type": "application/json"},
@@ -164,7 +172,7 @@ async def handler(job):
         return
 
     if "messages" in job_input:
-        payload = dict(job_input)
+        payload = default_chat_settings(dict(job_input))
         payload.setdefault("model", model_name())
         response = requests.post(
             f"{BASE_URL}/v1/chat/completions",
