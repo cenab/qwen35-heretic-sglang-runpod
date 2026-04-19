@@ -1,4 +1,4 @@
-FROM lmsysorg/sglang:dev
+FROM lmsysorg/sglang:latest-runtime
 
 RUN python3 -m pip install --no-cache-dir runpod requests hf_transfer
 
