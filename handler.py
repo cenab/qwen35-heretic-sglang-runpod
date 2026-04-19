@@ -133,6 +133,13 @@ def stream_response(response):
             yield line.decode("utf-8")
 
 
+def json_response(response):
+    try:
+        return response.json()
+    except ValueError:
+        return response.text
+
+
 async def handler(job):
     job_input = job.get("input") or {}
 
@@ -149,8 +156,11 @@ async def handler(job):
         if response.status_code >= 400:
             yield {"error": response.text, "status_code": response.status_code}
             return
-        for chunk in stream_response(response):
-            yield chunk
+        if payload.get("stream", False):
+            for chunk in stream_response(response):
+                yield chunk
+        else:
+            yield json_response(response)
         return
 
     if "messages" in job_input:
@@ -166,8 +176,11 @@ async def handler(job):
         if response.status_code >= 400:
             yield {"error": response.text, "status_code": response.status_code}
             return
-        for chunk in stream_response(response):
-            yield chunk
+        if payload.get("stream", False):
+            for chunk in stream_response(response):
+                yield chunk
+        else:
+            yield json_response(response)
         return
 
     response = requests.post(
